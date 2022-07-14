@@ -1,0 +1,36 @@
+#!/usr/bin/perl
+use strict;
+#
+#
+
+my $date = time();
+
+my $numprocs = `pgrep arcticasync.pl | wc -l`;
+my $RSYNC = "/primary/vari/software/rsync/3.1.2/bin/rsync";
+chomp $numprocs;
+system("echo already running > /primary/vari/admin/tools/arcticasync/logs/$date") if $numprocs != 1;
+die "already running\n" if $numprocs != 1;
+
+my $src = "/remote/arctica/";
+my $dest = "/primary/instruments/cryoem/arctica";
+
+die unless length(`ls $src`) > 5;
+die unless -e $src;
+die unless -e $dest;
+
+my $rsyncCmd = "$RSYNC -avxl $src $dest \&> /primary/vari/admin/tools/arcticasync/logs/$date";
+my $chmodCmd = "chown -R cryoem:cryoem_users $dest"; 
+
+runcmd("cd $dest");
+runcmd($rsyncCmd);
+runcmd($chmodCmd);
+
+sub runcmd{
+        my $cmd=shift @_;
+        my $caller=(caller(1))[3];
+        print STDERR "$caller\t$cmd\n";
+        system($cmd);
+}
+
+
+
